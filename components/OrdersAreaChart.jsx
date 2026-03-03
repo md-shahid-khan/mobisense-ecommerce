@@ -1,7 +1,7 @@
 'use client'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-export default function OrdersAreaChart({ allOrders }) {
+export default function OrdersAreaChart({ allOrders = [] }) {
 
     // Group orders by date
     const ordersPerDay = allOrders.reduce((acc, order) => {
