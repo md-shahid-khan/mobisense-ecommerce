@@ -1,5 +1,5 @@
 import {inngest} from "@/inngest/client";
-import {prisma} from "db"
+import {prisma} from "@/lib/prisma"
 
 
 //inngest function to save user data to the postgresql
