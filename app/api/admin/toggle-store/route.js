@@ -1,43 +1,58 @@
-import {getAuth} from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
 import authAdmin from "@/middlewares/authAdmin";
-import {NextResponse} from "next/server";
-import {prisma} from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-
-// toggle store is active
-export async function POST(req, res) {
+export async function POST(req) {
     try {
-        const {userId} = getAuth(req);
+        const { userId } = getAuth(req);
         const isAdmin = await authAdmin(userId);
+
         if (!isAdmin) {
-            return NextResponse.json({error: "Authentication error! user is not admin",});
+            return NextResponse.json(
+                { error: "Authentication error! user is not admin" },
+                { status: 401 }
+            );
         }
 
-        const storeId = await req.json();
+        const { storeId } = await req.json();
+
         if (!storeId) {
-            return NextResponse.json({error: "missing storeId"});
+            return NextResponse.json(
+                { error: "Missing storeId" },
+                { status: 400 }
+            );
         }
 
-        //find the store
-        const store = await prisma.store.findMany({
-            where: {id: storeId}
-        })
+
+        const store = await prisma.store.findUnique({
+            where: { id: storeId },
+        });
 
         if (!store) {
-            return NextResponse.json({error: "store not found"});
+            return NextResponse.json(
+                { error: "Store not found" },
+                { status: 404 }
+            );
         }
 
+
         await prisma.store.update({
-            where: {id: storeId},
+            where: { id: storeId },
             data: {
-                isActive: !store.isActive
-            }
-        })
+                isActive: !store.isActive,
+            },
+        });
 
-        return NextResponse.json({message: "Store updated successfully",});
-
+        return NextResponse.json({
+            message: "Store updated successfully",
+        });
 
     } catch (err) {
-        return NextResponse.json({message: err.message});
+        console.error(err);
+        return NextResponse.json(
+            { message: "Internal Server Error" },
+            { status: 500 }
+        );
     }
 }
