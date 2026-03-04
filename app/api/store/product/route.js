@@ -3,7 +3,7 @@ import authSeller from "@/middlewares/authSeller";
 import {NextResponse} from "next/server";
 import imagekit from "@/configs/imagekit";
 import {prisma} from "@/lib/prisma";
-import {store} from "next/dist/build/output/store";
+
 
 // add new product
 
