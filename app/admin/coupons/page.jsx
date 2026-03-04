@@ -65,29 +65,26 @@ export default function AdminCoupons() {
     }
 
     const deleteCoupon = async (code) => {
-
         try {
-            const confirm = window.confirm("Are you sure you want to delete this coupon?")
-            if (!confirm) {
-                return;
-            }
+            const confirmDelete = window.confirm("Are you sure you want to delete this coupon?");
+            if (!confirmDelete) return;
 
             const token = await getToken();
-            await axios.delete(`/api/admin/coupon?code${code}`, {
+            await axios.delete(`/api/admin/coupon?code=${code}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
-            })
+            });
 
-            await fetchCoupons();
-            toast.success("Successfully deleted coupon")
-            await fetchCoupons();
+            // Update the UI after deletion
+            setCoupons(prev => prev.filter(c => c.code !== code));
+
+            toast.success("Successfully deleted coupon");
 
         } catch (err) {
-            toast.error(err.response?.data?.error || err.message)
+            toast.error(err.response?.data?.error || err.message);
         }
-
-    }
+    };
 
     useEffect(() => {
 

@@ -42,20 +42,28 @@ export async function POST(req, res) {
 
 export async function DELETE(req, res) {
     try {
-        const {userId} = getAuth(req);
+        const { userId } = getAuth(req);
         const isAdmin = await authAdmin(userId);
         if (!isAdmin) {
-            return NextResponse.json({error: "Not authorized"})
+            return NextResponse.json({ error: "Not authorized" });
         }
-        const {searchParams} = req.nextUrl;
-        const code = searchParams.get("code");
-        await prisma.coupon.delete({
-            where: {id: code}
-        })
-        return NextResponse.json({message: "Successfully deleted coupon"})
-    } catch (e) {
-        return NextResponse.json({error: e.message})
 
+        const { searchParams } = req.nextUrl;
+        const code = searchParams.get("code");
+
+        if (!code) {
+            return NextResponse.json({ error: "Coupon code is required" });
+        }
+
+        // Delete by code
+        await prisma.coupon.delete({
+            where: { code: code.toUpperCase() } // ensure uppercase match
+        });
+
+        return NextResponse.json({ message: "Successfully deleted coupon" });
+
+    } catch (e) {
+        return NextResponse.json({ error: e.message });
     }
 }
 
