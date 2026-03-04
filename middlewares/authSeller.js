@@ -1,24 +1,21 @@
-
-
-import { prisma } from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 
 const authSeller = async (userId) => {
+    if (!userId) return false; //  prevent crash
+
     try {
         const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: { store: true },
+            where: {id: userId},
+            include: {store: true},
         });
 
-        if (!user || !user.store) {
-            return false;
-        }
+        if (!user || !user.store) return false;
 
-        if (user.store.status === "approved") {
-            return user.store.id; // return store id
+        if (user.store.status.toLowerCase() === "approved") {
+            return user.store.id;
         }
 
         return false;
-
     } catch (err) {
         console.error(err);
         return false;
