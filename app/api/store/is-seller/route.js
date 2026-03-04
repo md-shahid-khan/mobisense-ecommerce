@@ -1,25 +1,36 @@
-import {getAuth} from "@clerk/nextjs/server"
+import { getAuth } from "@clerk/nextjs/server";
 import authSeller from "@/middlewares/authSeller";
-import {NextResponse} from "next/server";
-import {prisma} from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-//auth seller
+export async function GET(req) {
+    try {
+        const { userId } = getAuth(req);
 
-export async function GET(req, res) {
-    try{
-        const {userId} = getAuth(req);
-        const isSeller = await authSeller(userId);
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        if(!isSeller){
-            return NextResponse.json({error: "not authorized"});
+        const sellerStoreId = await authSeller(userId);
+
+        if (!sellerStoreId) {
+            return NextResponse.json({ isSeller: false, storeInfo: null });
         }
 
         const storeInfo = await prisma.store.findUnique({
-            where:{userId: userId},
-        })
-        return NextResponse.json({isSeller: isSeller, storeInfo});
+            where: { id: sellerStoreId },
+        });
 
-    }catch(err){
-        return NextResponse.json({error: err.message || err.code});
+        return NextResponse.json({
+            isSeller: true,
+            storeInfo,
+        });
+
+    } catch (err) {
+        console.error(err);
+        return NextResponse.json(
+            { error: err.message || "Server error" },
+            { status: 500 }
+        );
     }
 }
