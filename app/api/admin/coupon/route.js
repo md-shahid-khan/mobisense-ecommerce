@@ -7,34 +7,33 @@ import {inngest} from "@/inngest/client";
 
 export async function POST(req, res) {
     try {
-        const {userId} = getAuth(req);
+        const { userId } = getAuth(req);
         const isAdmin = await authAdmin(userId);
         if (!isAdmin) {
-            return NextResponse.json({error: "Not authorized"}, {status: 401});
-
+            return NextResponse.json({ error: "Not authorized" }, { status: 401 });
         }
 
-        const {coupon} = await req.json();
+        const { coupon } = await req.json();
         coupon.code = coupon.code.toUpperCase();
-        await prisma.coupon.create({
+        coupon.expiresAt = new Date(coupon.expiresAt); // ensure Date
+
+        const createdCoupon = await prisma.coupon.create({
             data: coupon
-        }).then(async (coupon) => {
-            // run inngest scheduler for delete coupon on expire
-            await inngest.send({
-                name:"app/coupon.expired",
-                data:{
-                    code: coupon.code,
-                    expires_at:coupon.expires_at
-                }
-            })
-        })
+        });
 
-        return NextResponse.json({message: "Successfully created coupon"})
+        // schedule deletion
+        await inngest.send({
+            name: "app/coupon.expired",
+            data: {
+                code: createdCoupon.code,
+                expires_at: createdCoupon.expiresAt.toISOString() // always ISO string
+            }
+        });
 
+        return NextResponse.json({ message: "Successfully created coupon" });
 
     } catch (e) {
-        return NextResponse.json({error:e.message})
-
+        return NextResponse.json({ error: e.message });
     }
 }
 
@@ -52,12 +51,11 @@ export async function DELETE(req, res) {
         const code = searchParams.get("code");
 
         if (!code) {
-            return NextResponse.json({ error: "Coupon code is required" });
+            return NextResponse.json({ error: "Coupon code required" }, { status: 400 });
         }
 
-        // Delete by code
         await prisma.coupon.delete({
-            where: { code: code.toUpperCase() } // ensure uppercase match
+            where: { code } // delete by code
         });
 
         return NextResponse.json({ message: "Successfully deleted coupon" });
