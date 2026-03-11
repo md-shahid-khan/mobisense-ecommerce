@@ -18,8 +18,8 @@ export async function POST(req, res) {
         return NextResponse.json({newAddress, message: "address created successfully."})
 
     } catch (e) {
-        console.log(e)
-        return NextResponse.json({error: e.message}, {status: 400})
+
+        return NextResponse.json({error: e.message || e.code}, {status: 400})
 
     }
 
@@ -29,8 +29,6 @@ export async function POST(req, res) {
 export async function GET(req, res) {
     try {
         const {userId} = getAuth(req);
-
-
 
         const addresses = await prisma.address.findMany({where: {userId: userId}})
 
